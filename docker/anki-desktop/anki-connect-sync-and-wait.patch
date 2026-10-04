@@ -1,0 +1,54 @@
+--- a/__init__.py
++++ b/__init__.py
+@@ -41,7 +41,8 @@
+ from anki.importing import AnkiPackageImporter
+ from anki.notes import Note
+ from anki.errors import NotFoundError
+-from aqt.qt import Qt, QTimer, QMessageBox, QCheckBox
++from aqt.qt import Qt, QTimer, QMessageBox, QCheckBox, QEventLoop
++from aqt.sync import sync_collection
+ 
+ from .web import format_exception_reply, format_success_reply
+ from .edit import Edit
+@@ -500,6 +501,41 @@
+         return authenticated
+ 
+ 
++    @util.api()
++    def syncAndWait(self, timeoutSeconds=120):
++        if not self.window().pm.sync_auth():
++            raise Exception('AnkiWeb login required')
++
++        timeoutSeconds = int(timeoutSeconds)
++        if timeoutSeconds < 1:
++            raise Exception('timeoutSeconds must be positive')
++
++        loop = QEventLoop()
++        state = {
++            'done': False,
++            'timedOut': False,
++        }
++        timer = QTimer()
++        timer.setSingleShot(True)
++
++        def on_done():
++            state['done'] = True
++            loop.quit()
++
++        def on_timeout():
++            state['timedOut'] = True
++            loop.quit()
++
++        timer.timeout.connect(on_timeout)
++        timer.start(timeoutSeconds * 1000)
++        sync_collection(self.window(), on_done)
++        loop.exec()
++        timer.stop()
++        if state['timedOut'] and not state['done']:
++            raise Exception('AnkiWeb sync timed out')
++        return True
++
++
+     @util.api()
+     def multi(self, actions):
+         return list(map(self.handler, actions))

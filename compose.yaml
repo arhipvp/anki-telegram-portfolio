@@ -1,0 +1,49 @@
+name: anki-telegram-bot
+
+services:
+  anki-desktop:
+    build:
+      context: ./docker/anki-desktop
+      args:
+        ANKI_VERSION: "25.07.5"
+        ANKICONNECT_VERSION: "23.10.29.0"
+    restart: unless-stopped
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "${TZ:-Europe/Moscow}"
+    ports:
+      - "127.0.0.1:${ANKI_WEB_PORT:-3000}:3000"
+    volumes:
+      - anki-data:/config
+    networks:
+      - app
+
+  bot:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ANKI_CONNECT_URL: http://anki-desktop:8765
+      APP_DB_PATH: /app/data/app.db
+      APP_MEDIA_DIR: /app/data/media
+      APP_LOG_FILE: /app/logs/app.log
+      ANKI_DECK_NAME: German
+    volumes:
+      - bot-data:/app/data
+      - bot-logs:/app/logs
+    depends_on:
+      - anki-desktop
+    networks:
+      - app
+
+networks:
+  app:
+    internal: false
+
+volumes:
+  anki-data:
+  bot-data:
+  bot-logs:

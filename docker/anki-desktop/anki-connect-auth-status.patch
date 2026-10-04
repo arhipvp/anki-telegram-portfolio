@@ -1,0 +1,12 @@
+--- a/__init__.py
++++ b/__init__.py
+@@ -491,0 +492,9 @@
++    @util.api()
++    def syncAuthStatus(self):
++        profile_manager = self.window().pm
++        authenticated = bool(profile_manager.profile and profile_manager.profile.get('syncKey'))
++        if authenticated:
++            profile_manager.save()
++        return authenticated
++
++

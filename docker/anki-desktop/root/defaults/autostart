@@ -1,0 +1,25 @@
+setxkbmap -layout us &
+
+mkdir -p \
+    /config/app/Anki \
+    /config/app/Anki2/addons21/2055492159 \
+    /config/.local/share
+ln -sfn /config/app/Anki /config/.local/share/Anki
+ln -sfn /config/app/Anki2 /config/.local/share/Anki2
+cp -a /opt/ankiconnect/. /config/app/Anki2/addons21/2055492159/
+rm -rf /config/app/Anki2/addons21/2055492159/__pycache__
+
+cat > /config/app/Anki2/addons21/2055492159/config.json <<'EOF'
+{
+    "apiKey": null,
+    "apiLogPath": null,
+    "ignoreOriginList": [],
+    "webBindAddress": "0.0.0.0",
+    "webBindPort": 8765,
+    "webCorsOriginList": ["http://localhost"]
+}
+EOF
+
+export DISABLE_QT5_COMPAT=1
+export LC_ALL=en_US.UTF-8
+anki
